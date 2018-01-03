@@ -8,6 +8,15 @@ Shapeless based serialization for BSON from Mongo Java Driver
 MongoLess is a simple lib for encoding scala case classes for [Mongo Java Driver](https://github.com/mongodb/mongo-java-driver).
 You can also use it with [Scala mongo driver](https://github.com/mongodb/mongo-scala-driver)
 
+#Installation
+
+MonadLess is currently available for Scala 2.12 and Java 8.
+To install MongoLess just add following line to your sbt file
+```scala
+libraryDependencies += "com.github.a14e" %% "mongoless" % "0.1"
+```
+
+
 # Case class to/from bson encoding
 
 Encoding to Bson is quiet simple: just ```import a14e.bson.encoder.BsonEncoder._``` and call ```asBsonValue```.

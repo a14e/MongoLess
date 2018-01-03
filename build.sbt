@@ -1,5 +1,7 @@
 name := "mongoless"
 
+organization := "com.github.a14e"
+
 version := "0.1"
 
 scalaVersion := "2.12.4"
@@ -27,22 +29,22 @@ publishArtifact in Test := false
 // publishing
 
 pomExtra := {
-  <url>https://github.com/a14e/collz/</url>
+  <url>https://github.com/a14e/MongoLess/</url>
     <licenses>
       <license>
         <name>MIT</name>
-        <url>https://github.com/a14e/collz/blob/master/LICENSE.txt</url>
+        <url>https://github.com/a14e/MongoLess/blob/master/LICENSE.txt</url>
         <distribution>repo</distribution>
       </license>
     </licenses>
     <scm>
-      <connection>scm:git:git@github.com:a14e/collz.git</connection>
-      <url>https://github.com/a14e/collz.git</url>
+      <connection>scm:git:git@github.com:a14e/MongoLess.git</connection>
+      <url>https://github.com/a14e/MongoLess.git</url>
     </scm>
     <developers>
       <developer>
         <id>AndrewInstance</id>
-        <name>Andrew Borisenko</name>
+        <name>Andrew</name>
         <email>m0hct3r@gmail.com</email>
       </developer>
     </developers>
