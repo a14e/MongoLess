@@ -1,4 +1,7 @@
 # MongoLess
+[![Build Status](https://travis-ci.org/MongoLess/collz.svg?branch=master)](https://travis-ci.org/a14e/MongoLess)
+[![codecov.io](https://codecov.io/gh/a14e/MongoLess/coverage.svg?branch=master)](https://codecov.io/gh/MongoLess/collz?branch=master)
+
 Shapeless based serialization for BSON from Mongo Java Driver
 
 

@@ -1,4 +1,4 @@
-name := "MongoLess"
+name := "mongoless"
 
 version := "0.1"
 
