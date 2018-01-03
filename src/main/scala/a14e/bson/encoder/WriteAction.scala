@@ -28,11 +28,4 @@ object WriteAction {
   case class Value(value: BsonValue) extends WriteAction
   case class NamedValue(name: String, value: BsonValue) extends WriteAction
 
-  def enrichWithKey(action: WriteAction, newKey: String): WriteAction = action match {
-    case Empty => Empty
-    case Value(x) => NamedValue(newKey, x)
-    case NamedValue(_, value) => NamedValue(newKey, value)
-  }
-
-
 }
