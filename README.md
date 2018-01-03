@@ -8,8 +8,9 @@ You can also use it with [Scala mongo driver](https://github.com/mongodb/mongo-s
 # Case class to bson encoding
 
 Encoding to Bson is quiet simple: just ```import a14e.bson.encoder.BsonEncoder._``` and call ```asBsonValue```.
+For decoding ```import a14e.bson.decoder.BsonDecoder._``` and call ```.as[...]```.
 If you want to replace field name with ```_id``` use ```ID``` wrapper.
-For decoding ```import a14e.bson.decoder.BsonDecoder._``` and call ```.as[...]``` 
+
 
 ## Simple example
 ```scala
@@ -33,6 +34,7 @@ bson.as[User] == Some(exampleUser)
 
 ```
 
+Nested and recursive case classes are also supported
 
 ## Bigger example 
 ```scala
