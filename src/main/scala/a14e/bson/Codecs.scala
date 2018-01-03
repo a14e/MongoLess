@@ -3,7 +3,6 @@ package a14e.bson
 
 import org.bson.{BsonReader, BsonWriter}
 import org.bson.codecs.{BsonDocumentCodec, Codec, DecoderContext, EncoderContext}
-import sun.plugin.dom.exception.InvalidStateException
 import scala.reflect.ClassTag
 
 import a14e.bson.decoder.BsonDecoder
@@ -21,7 +20,7 @@ object Codecs {
       override def decode(reader: BsonReader,
                           decoderContext: DecoderContext): T = {
         val decoded = bsonDocumentCodec.decode(reader, decoderContext).as[T]
-        decoded.getOrElse(throw new InvalidStateException(s"cant decode value for class $clazz"))
+        decoded.getOrElse(throw new RuntimeException(s"cant decode value for class $clazz"))
       }
 
       override def encode(writer: BsonWriter,
