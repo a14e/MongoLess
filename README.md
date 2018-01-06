@@ -125,13 +125,16 @@ val bson = Bson.obj(
   )
 )
 bson \\ "_id"
-
+// Success(BsonInt32{value=213})
 
 (bson \\ "_id").as[Int]
+// 213
 
 (bson \ "children" \\ "name").as[String]
+// name1
 
 (bson \\ "someKey").as[Int]
+// 123
 
 ```
 
