@@ -2,7 +2,7 @@ name := "mongoless"
 
 organization := "com.github.a14e"
 
-version := "0.1"
+version := "0.2"
 
 scalaVersion := "2.12.4"
 crossScalaVersions := Seq("2.11.8", "2.12.4")

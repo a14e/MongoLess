@@ -3,7 +3,7 @@ package a14e.bson.encoder
 import org.scalatest.{FlatSpec, Matchers}
 import BsonEncoder._
 import a14e.bson.{Bson, ID}
-
+import a14e.bson.auto._
 
 case class SampleUser(id: ID[Int],
                       name: String,
@@ -13,7 +13,7 @@ case class SampleUser(id: ID[Int],
 case class Job(company: String,
                salary: Long)
 
-class GenericEncodersSpec extends FlatSpec with Matchers {
+class GenericBsonEncodersSpec extends FlatSpec with Matchers {
 
   "GenericEncoder" should "encode simple class" in {
     val user = SampleUser(
@@ -29,7 +29,7 @@ class GenericEncodersSpec extends FlatSpec with Matchers {
       "children" -> Bson.arr()
     )
 
-    user.asBsonValue shouldBe expectedBson
+    user.asBson shouldBe expectedBson
   }
 
   it should "encode nested classes" in {
@@ -55,7 +55,7 @@ class GenericEncodersSpec extends FlatSpec with Matchers {
       "children" -> Bson.arr()
     )
 
-    user.asBsonValue shouldBe expectedBson
+    user.asBson shouldBe expectedBson
   }
 
   it should "encode recourcive classes" in {
@@ -85,6 +85,6 @@ class GenericEncodersSpec extends FlatSpec with Matchers {
       )
     )
 
-    user.asBsonValue shouldBe expectedBson
+    user.asBson shouldBe expectedBson
   }
 }

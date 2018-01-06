@@ -3,7 +3,7 @@ package a14e.bson.encoder
 import org.bson.BsonDocument
 
 
-trait GenericEncoders {
+trait GenericBsonEncoders {
 
   import shapeless.labelled._
   import shapeless.{LabelledGeneric, Witness, _}

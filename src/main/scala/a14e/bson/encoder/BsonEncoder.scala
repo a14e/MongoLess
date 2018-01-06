@@ -14,20 +14,7 @@ trait BsonEncoder[T] {
   def contramap[B](to: B => T): BsonEncoder[B] = x => encode(to(x))
 }
 
-object BsonEncoder extends BsonEncoders {
+object BsonEncoder extends DefaultBsonEncoders {
   def apply[T](f: T => BsonValue): BsonEncoder[T] = obj => WriteAction.Value(f(obj))
 }
 
-trait BsonEncoders
-  extends DefaultBsonEncoders
-    with GenericEncoders
-    with RichObjectBsonEncodingsImplicits
-
-
-trait RichObjectBsonEncodingsImplicits {
-
-  implicit class RichBsonEncodingsObject[T](obj: T) {
-    def asBsonValue(implicit encoder: BsonEncoder[T]): BsonValue = encoder.encode(obj).extract
-  }
-
-}

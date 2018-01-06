@@ -3,7 +3,7 @@ package a14e.bson.decoder
 import java.time.{Instant, LocalDate, ZoneId}
 import java.util.Date
 
-import a14e.bson.ID
+import a14e.bson.{BsonReadException, BsonReadExceptionUtils, ID}
 import a14e.bson.util.EnumFinder
 import org.bson._
 import org.bson.types.Decimal128
@@ -12,16 +12,16 @@ import shapeless.Lazy
 import scala.collection.JavaConverters._
 import scala.collection.immutable.VectorBuilder
 import scala.reflect.ClassTag
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 
 trait DefaultBsonDecoders {
   implicit lazy val bsonValueDecoder: BsonDecoder[BsonValue] = {
-    BsonDecoder(DecodeStrategy.Simple, Some(_))
+    BsonDecoder(Seq.empty, Success(_))
   }
 
   implicit lazy val stringBsonDecoder: BsonDecoder[String] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonString => s.getValue }
+    implicitly[BsonDecoder[BsonValue]].collect({ case s: BsonString => s.getValue }, failError[BsonString])
   }
 
   implicit lazy val symbolBsonDecoder: BsonDecoder[Symbol] = {
@@ -29,29 +29,36 @@ trait DefaultBsonDecoders {
   }
 
   implicit lazy val intBsonDecoder: BsonDecoder[Int] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonNumber => s.intValue() }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case s: BsonNumber => s.intValue() }, failError[BsonNumber])
   }
   implicit lazy val longBsonDecoder: BsonDecoder[Long] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonNumber => s.longValue() }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case s: BsonNumber => s.longValue() }, failError[BsonNumber])
   }
   implicit lazy val decimal128BsonDecoder: BsonDecoder[Decimal128] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonNumber => s.decimal128Value() }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case s: BsonNumber => s.decimal128Value() }, failError[BsonNumber])
   }
 
   implicit lazy val doubleBsonDecoder: BsonDecoder[Double] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonNumber => s.doubleValue() }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case s: BsonNumber => s.doubleValue() }, failError[BsonNumber])
   }
 
   implicit lazy val booleanBsonDecoder: BsonDecoder[Boolean] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonBoolean => s.getValue }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case s: BsonBoolean => s.getValue }, failError[BsonBoolean])
   }
 
   implicit lazy val dateBsonDecoder: BsonDecoder[Date] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonDateTime => new Date(s.getValue) }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case s: BsonDateTime => new Date(s.getValue) }, failError[BsonDateTime])
   }
 
   implicit lazy val instantBsonDecoder: BsonDecoder[Instant] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case s: BsonDateTime => Instant.ofEpochMilli(s.getValue) }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case s: BsonDateTime => Instant.ofEpochMilli(s.getValue) }, failError[BsonDateTime])
   }
 
   implicit lazy val localDateBsonDecoder: BsonDecoder[LocalDate] = {
@@ -59,26 +66,27 @@ trait DefaultBsonDecoders {
   }
 
   implicit lazy val bytesBsonDecoder: BsonDecoder[Array[Byte]] = {
-    implicitly[BsonDecoder[BsonValue]].collect { case b: BsonBinary => b.getData }
+    implicitly[BsonDecoder[BsonValue]]
+      .collect({ case b: BsonBinary => b.getData }, failError[BsonBinary])
   }
 
 
   implicit def enumBsonDecoder[T <: Enumeration : ClassTag]: BsonDecoder[T#Value] = {
-    val enum = EnumFinder.cachedEnum[T]
-    implicitly[BsonDecoder[String]].flatMap(x => Try(enum.withName(x)).toOption)
+    val enumTry = Try(EnumFinder.cachedEnum[T])
+    implicitly[BsonDecoder[String]].flatMap(x => enumTry.map(_.withName(x)))
   }
 
 
   implicit def optionDecoder[T](implicit decoder: Lazy[BsonDecoder[T]]): BsonDecoder[Option[T]] = {
     implicitly[BsonDecoder[BsonValue]]
-      .map {
-        case _: BsonNull => None
-        case c => decoder.value.decode(c)
-      }
+      .flatMap {
+        case _: BsonNull => Success(Option.empty[T])
+        case c => decoder.value.decode(c).map(Some(_))
+      }.copy(decodeStrategies = DecodeStrategy.EnableEmpty +: decoder.value.decodeStrategies)
   }
 
   implicit def idDecoder[T](implicit bsonDecoder: BsonDecoder[T]): BsonDecoder[ID[T]] = {
-    bsonDecoder.map(ID(_)).copy(decodeStrategy = DecodeStrategy.Named("_id"))
+    bsonDecoder.map(ID(_)).copy(decodeStrategies = DecodeStrategy.Named("_id") +: bsonDecoder.decodeStrategies)
   }
 
   implicit def seqDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Seq[T]] = {
@@ -87,13 +95,15 @@ trait DefaultBsonDecoders {
         s.getValues
           .iterator()
           .asScala
-          .foldLeft(Option(new VectorBuilder[T])) {
-            case (None, _) => None
-            case (Some(builder), x) =>
-              bsonDecoder.value.decode(x).map(builder += _)
+          .foldLeft(Try(new VectorBuilder[T])) { (builderTry, current) =>
+
+            for {
+              builder <- builderTry
+              decoded <- bsonDecoder.value.decode(current)
+            } yield builder += decoded
           }.map(_.result())
 
-      case _ => None
+      case x => fail[BsonArray](x)
     }
   }
 
@@ -103,40 +113,61 @@ trait DefaultBsonDecoders {
         s.getValues
           .iterator()
           .asScala
-          .foldLeft(Option(Set.newBuilder[T])) {
-            case (None, _) => None
-            case (Some(builder), x) =>
-              bsonDecoder.value.decode(x).map(builder += _)
+          .foldLeft(Try(Set.newBuilder[T])) { (builderTry, current) =>
+            for {
+              builder <- builderTry
+              decoded <- bsonDecoder.value.decode(current)
+            } yield builder += decoded
           }.map(_.result())
 
-      case _ => None
+      case x => fail[BsonArray](x)
     }
   }
 
   implicit def mapDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Map[String, T]] = {
-    implicitly[BsonDecoder[BsonValue]].flatMap {
-      case s: BsonDocument =>
-        bsonDecoder.value match {
-          case BsonDecoder(DecodeStrategy.Simple, decodeFunction) =>
+    val fixedKeyOpt: Option[String] = bsonDecoder.value.decodeStrategies.collectFirst {
+      case DecodeStrategy.Named(name) => name
+    }
+    lazy val enableEmpty = bsonDecoder.value.decodeStrategies.collectFirst { case DecodeStrategy.EnableEmpty => }.isDefined
+
+    lazy val decodeFunction: BsonValue => Try[T] = bsonDecoder.value.decode
+
+    fixedKeyOpt match {
+      case Some(key) =>
+        implicitly[BsonDecoder[BsonValue]].flatMap {
+          case s: BsonDocument =>
+            val decoded = Option(s.get(key)) match {
+              case Some(v) => decodeFunction(v)
+              case None if enableEmpty => decodeFunction(new BsonNull())
+              case None =>
+                throw BsonReadExceptionUtils.missingFieldError(key)
+            }
+            val enrichedError = BsonReadExceptionUtils.enrichTryWitKey(decoded, key)
+            enrichedError.map(v => Map(key -> v))
+          case x => fail[BsonDocument](x)
+        }
+
+      case None =>
+        implicitly[BsonDecoder[BsonValue]].flatMap {
+          case s: BsonDocument =>
             s.entrySet()
               .iterator()
               .asScala
-              .foldLeft(Option(Map.newBuilder[String, T])) {
-                case (None, _) => None
-                case (Some(builder), entry) =>
-                  decodeFunction(entry.getValue).map { decoded =>
-                    builder += (entry.getKey -> decoded)
-                  }
+              .foldLeft(Try(Map.newBuilder[String, T])) { (builderTry, entry) =>
+                for {
+                  builder <- builderTry
+                  decoded <- BsonReadExceptionUtils
+                    .enrichTryWitKey(decodeFunction(entry.getValue), entry.getKey)
+                } yield builder += (entry.getKey -> decoded)
+
               }.map(_.result())
-
-          case BsonDecoder(DecodeStrategy.Named(key), decodeFunction) =>
-            val found = Option(s.get(key)).getOrElse(new BsonNull())
-            decodeFunction(found).map(v => Map(key -> v))
-
-          case _ => None
+          case x => fail[BsonDocument](x)
         }
     }
   }
+
+  private def failError[T: ClassTag](x: BsonValue): Throwable = BsonReadExceptionUtils.invalidTypeError[T](x)
+  private def fail[T: ClassTag](x: BsonValue): Try[Nothing] = Failure(failError[T](x))
 
 }
 

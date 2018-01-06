@@ -1,6 +1,8 @@
 package a14e.bson.decoder
 
 import a14e.bson.{Bson, ID}
+import a14e.bson._
+import a14e.bson.auto._
 import org.scalatest.{FlatSpec, Matchers}
 import BsonDecoder._
 
@@ -12,7 +14,7 @@ case class SampleUser(id: ID[Int],
 case class Job(company: String,
                salary: Long)
 
-class GenericDecodersSpec extends FlatSpec with Matchers {
+class GenericBsonDecodersSpec extends FlatSpec with Matchers {
 
   "GenericDecoders" should "encode simple class" in {
     val user = SampleUser(
@@ -28,7 +30,7 @@ class GenericDecodersSpec extends FlatSpec with Matchers {
       "children" -> Bson.arr()
     )
 
-    bson.as[SampleUser] shouldBe Some(user)
+    bson.as[SampleUser] shouldBe user
   }
 
   it should "encode nested classes" in {
@@ -54,7 +56,7 @@ class GenericDecodersSpec extends FlatSpec with Matchers {
       "children" -> Bson.arr()
     )
 
-    bson.as[SampleUser] shouldBe Some(user)
+    bson.as[SampleUser] shouldBe user
   }
 
   it should "encode recourcive classes" in {
@@ -84,6 +86,6 @@ class GenericDecodersSpec extends FlatSpec with Matchers {
       )
     )
 
-    bson.as[SampleUser] shouldBe Some(user)
+    bson.as[SampleUser] shouldBe user
   }
 }

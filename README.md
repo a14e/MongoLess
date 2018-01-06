@@ -13,22 +13,20 @@ You can also use it with [Scala mongo driver](https://github.com/mongodb/mongo-s
 MonadLess is currently available for Scala 2.12 and Java 8.
 To install MongoLess just add following line to your sbt file
 ```scala
-libraryDependencies += "com.github.a14e" %% "mongoless" % "0.1"
+libraryDependencies += "com.github.a14e" %% "mongoless" % "0.2"
 ```
 
 
 # Case class to/from bson encoding
 
-Encoding to Bson is quiet simple: just ```import a14e.bson.encoder.BsonEncoder._``` and call ```asBsonValue```.
-For decoding ```import a14e.bson.decoder.BsonDecoder._``` and call ```.as[...]```.
+Encoding to Bson is quiet simple: just ```import a14e.bson.auto._``` and call ```asBsonValue```.
+For decoding ```import a14e.bson.auto._``` and call ```.as[...]```.
 If you want to replace field name with ```_id``` use ```ID``` wrapper.
-
 
 ## Simple example
 ```scala
-import a14e.bson.ID
-import a14e.bson.encoder.BsonEncoder._
-import a14e.bson.decoder.BsonDecoder._
+import a14e.bson._
+import a14e.bson.auto._
 
 case class User(id: ID[Int],
                 name: String,
@@ -39,9 +37,9 @@ val exampleUser = User(
   age = 25
 )
 
-val bson = exampleUser.asBsonValue
+val bson = exampleUser.asBson
 // { "age" : 25, "name" : "some name", "_id" : 1 }
-bson.as[User] == Some(exampleUser)
+bson.as[User] == exampleUser
 // true
 
 ```
@@ -50,9 +48,8 @@ Nested and recursive case classes are also supported
 
 ## Bigger example 
 ```scala
-import a14e.bson.ID
-import a14e.bson.encoder.BsonEncoder._
-import a14e.bson.decoder.BsonDecoder._
+import a14e.bson._
+import a14e.bson.auto._
 
 case class SampleUser(id: ID[Int],
                       name: String,
@@ -81,11 +78,11 @@ val user = SampleUser(
   )
 )
 
-val bson = user.asBsonValue
+val bson = user.asBson
 
 // { "children" : [{ "children" : [], "name" : "name1", "_id" : 456 }], "job" : { "salary" : { "$numberLong" : "123" }, "company" : "some company" }, "name" : "name", "_id" : 213 }
 
-bson.as[SampleUser] == Some(user) 
+bson.as[SampleUser] == user
 // true
 ```
 
@@ -110,13 +107,41 @@ Bson.obj(
 ```
 
 
+## Search and Recursive search
+MongoLess also supports helpers for search and recursive search. 
+User `\` to search in root and `\\` for recursive search of nearest node with expected key
+```scala
+import a14e.bson._
+val bson = Bson.obj(
+  "_id" -> 213,
+  "name" ->  "name",
+  "children" -> Bson.arr(
+    Bson.obj(
+      "_id" -> 456,
+      "name" ->  "name1",
+      "children" -> Bson.arr(),
+      "someKey" -> 123
+    )
+  )
+)
+bson \\ "_id"
+
+
+(bson \\ "_id").as[Int]
+
+(bson \ "children" \\ "name").as[String]
+
+(bson \\ "someKey").as[Int]
+
+```
+
 ## Enum Support
 MongoLess also offers limited scala enums support. But enum should be an object and it should
 not be contained in a class or trait
 
 ```scala
-import a14e.bson.encoder.BsonEncoder._
-import a14e.bson.decoder.BsonDecoder._
+import a14e.bson._
+import a14e.bson.auto._
 
 
 object SizeType extends Enumeration {
@@ -131,8 +156,8 @@ case class Hat(price: Int,
                sizeType: SizeType)
 val hat = Hat(123, Big)
 
-val bsonHat = hat.asBsonValue
+val bsonHat = hat.asBson
 //{ "sizeType" : "BIG", "price" : 123 }
-bsonHat.as[Hat] == Some(hat)
+bsonHat.as[Hat] == hat
 // true
 ```

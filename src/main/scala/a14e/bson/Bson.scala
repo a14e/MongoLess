@@ -1,7 +1,9 @@
 package a14e.bson
 
-import a14e.bson.encoder.{BsonEncoder, WriteAction}
+import a14e.bson.decoder.GenericBsonDecoders
+import a14e.bson.encoder.{BsonEncoder, GenericBsonEncoders, WriteAction}
 import org.bson.{BsonArray, BsonDocument, BsonElement}
+
 import scala.collection.JavaConverters._
 
 object Bson {
@@ -28,6 +30,7 @@ object Bson {
     }.asJava
     new BsonArray(array)
   }
+
 
 }
 
