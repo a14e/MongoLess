@@ -17,9 +17,9 @@ object BsonReadExceptionUtils {
                         error: String): String = {
     val pathString = {
       if (path.isEmpty) ""
-      else "at path " + path.mkString(".")
+      else " at path " + path.mkString(".")
     }
-    val text = s"Bson parse error $pathString: $error"
+    val text = s"Bson parse error$pathString: $error"
     text
   }
 
