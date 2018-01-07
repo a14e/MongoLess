@@ -1,15 +1,14 @@
-package a14e.bson.decoder
+package a14e.bson.encoder
 
 import java.time.{Instant, LocalDate, ZoneId}
 import java.util.Date
 
 import a14e.bson.ID
-import a14e.bson.encoder.{BsonEncoder, WriteAction}
 import org.bson.types.Decimal128
 import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDecimal128, BsonDocument, BsonDouble, BsonElement, BsonInt32, BsonInt64, BsonString}
 import org.scalatest.{FlatSpec, Matchers}
 
-object EncodingSomeEnum extends Enumeration {
+object SomeEnum extends Enumeration {
   type SomeEnum = Value
   final val SomeEnum1 = Value("SomeEnum123")
   final val SomeEnum2 = Value("SomeEnum234")
@@ -114,9 +113,9 @@ class DefaultBsonEncodersSpec extends FlatSpec with Matchers {
   }
 
   "enumEncoder" should "encode valid value" in {
-    val x = EncodingSomeEnum.SomeEnum1
+    val x = SomeEnum.SomeEnum1
     val expected = WriteAction.Value(new BsonString("SomeEnum123"))
-    val result = BsonEncoder.enumEncoder[EncodingSomeEnum.type].encode(x)
+    val result = BsonEncoder.enumEncoder[SomeEnum.type].encode(x)
     result shouldBe expected
   }
 

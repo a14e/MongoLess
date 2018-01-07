@@ -1,4 +1,4 @@
-package a14e.bson.encoder
+package a14e.bson.decoder
 
 import java.time.{Instant, LocalDate, ZoneId}
 import java.util.Date

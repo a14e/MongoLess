@@ -14,6 +14,14 @@ case class SampleUser(id: ID[Int],
 case class Job(company: String,
                salary: Long)
 
+
+case class Level(levelNumber: Int,
+                 nextLevel: Option[Level])
+
+
+case class NamedNode(nodeName: String,
+                     children: Map[String, NamedNode])
+
 class GenericBsonDecodersSpec extends FlatSpec with Matchers {
 
   "GenericDecoders" should "encode simple class" in {
@@ -87,5 +95,51 @@ class GenericBsonDecodersSpec extends FlatSpec with Matchers {
     )
 
     bson.as[SampleUser] shouldBe user
+  }
+
+
+  it should "encode recursive option classes" in {
+    val level = Level(
+      levelNumber = 1,
+      nextLevel = Some(
+        Level(
+          levelNumber = 2,
+          nextLevel = None
+        )
+      )
+    )
+    val bson = Bson.obj(
+      "levelNumber" -> 1,
+      "nextLevel" -> Bson.obj(
+        "levelNumber" -> 2
+      )
+    )
+
+    bson.as[Level] shouldBe level
+  }
+
+  it should "encode recursive map classes" in {
+    val node =
+      NamedNode(
+        nodeName = "node1",
+        children = Map(
+          "node2" -> NamedNode("node2", Map.empty),
+          "node3" -> NamedNode("node3", Map.empty)
+        )
+      )
+    val bson = Bson.obj(
+      "nodeName" -> "node1",
+      "children" -> Bson.obj(
+        "node2" -> Bson.obj(
+          "nodeName" -> "node2",
+          "children" -> Bson.obj()
+        ),
+        "node3" -> Bson.obj(
+          "nodeName" -> "node3",
+          "children" -> Bson.obj()
+        )
+      )
+    )
+    bson.as[NamedNode] shouldBe node
   }
 }
