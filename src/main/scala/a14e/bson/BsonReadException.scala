@@ -4,7 +4,12 @@ import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 case class BsonReadException(path: Seq[String],
-                             error: String) extends Throwable(BsonReadExceptionUtils.generateErrorText(path, error))
+                             error: String) extends Throwable {
+  override def getMessage: String = {
+    BsonReadExceptionUtils.generateErrorText(path, error)
+  }
+
+}
 
 
 object BsonReadExceptionUtils {
