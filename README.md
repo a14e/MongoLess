@@ -109,7 +109,7 @@ Bson.obj(
 
 ## Search and Recursive search
 MongoLess also supports helpers for search and recursive search. 
-User `\` to search in root and `\\` for recursive search of nearest node with expected key
+Use `\` to search in root and `\\` for recursive search of nearest node with expected key
 ```scala
 import a14e.bson._
 val bson = Bson.obj(
