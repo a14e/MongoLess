@@ -19,7 +19,7 @@ libraryDependencies += "com.github.a14e" %% "mongoless" % "0.2.1"
 
 # Case class to/from bson encoding
 
-Encoding to Bson is quiet simple: just ```import a14e.bson.auto._``` and call ```asBsonValue```.
+Encoding to Bson is quiet simple: just ```import a14e.bson.auto._``` and call ```asBson```.
 For decoding ```import a14e.bson.auto._``` and call ```.as[...]```.
 If you want to replace field name with ```_id``` use ```ID``` wrapper.
 
