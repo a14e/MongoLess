@@ -4,7 +4,6 @@ import java.time.{Instant, LocalDate, ZoneId}
 import java.util.Date
 
 import a14e.bson.{BsonReadException, BsonReadExceptionUtils, ID}
-import a14e.bson.util.EnumFinder
 import org.bson._
 import org.bson.types.Decimal128
 import shapeless.Lazy
@@ -68,12 +67,6 @@ trait DefaultBsonDecoders {
   implicit lazy val bytesBsonDecoder: BsonDecoder[Array[Byte]] = {
     implicitly[BsonDecoder[BsonValue]]
       .collect({ case b: BsonBinary => b.getData }, failError[BsonBinary])
-  }
-
-
-  implicit def enumBsonDecoder[T <: Enumeration : ClassTag]: BsonDecoder[T#Value] = {
-    val enumTry = Try(EnumFinder.cachedEnum[T])
-    implicitly[BsonDecoder[String]].flatMap(x => enumTry.map(_.withName(x)))
   }
 
 

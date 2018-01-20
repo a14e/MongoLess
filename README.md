@@ -137,30 +137,3 @@ bson \\ "_id"
 // 123
 
 ```
-
-## Enum Support
-MongoLess also offers limited scala enums support. But enum should be an object and it should
-not be contained in a class or trait
-
-```scala
-import a14e.bson._
-import a14e.bson.auto._
-
-
-object SizeType extends Enumeration {
-    type SizeType = Value
-    val Big = Value("BIG")
-    val Small = Value("SMALL")
-}
-
-import SizeType._
-
-case class Hat(price: Int,
-               sizeType: SizeType)
-val hat = Hat(123, Big)
-
-val bsonHat = hat.asBson
-//{ "sizeType" : "BIG", "price" : 123 }
-bsonHat.as[Hat] == hat
-// true
-```

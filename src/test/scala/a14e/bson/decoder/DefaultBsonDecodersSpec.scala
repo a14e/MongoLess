@@ -4,8 +4,6 @@ import java.time.{Instant, LocalDate, ZoneId}
 import java.util.Date
 
 import a14e.bson.ID
-import a14e.bson.decoder.DecodeStrategy.Named
-import a14e.bson.decoder.{BsonDecoder, DecodeStrategy}
 import org.bson.types.Decimal128
 import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDecimal128, BsonDocument, BsonDouble, BsonElement, BsonInt32, BsonInt64, BsonNull, BsonString}
 import org.scalatest.{FlatSpec, Matchers}
@@ -171,19 +169,6 @@ class DefaultBsonDecodersSpec extends FlatSpec with Matchers {
     BsonDecoder.bytesBsonDecoder.decode(bson).isFailure shouldBe true
   }
 
-
-  "enumBsonDecoder" should "decode valid value" in {
-    val bson1 = new BsonString("SomeEnum123")
-    BsonDecoder.enumBsonDecoder[DecodingSomeEnum.type].decode(bson1) shouldBe Success(DecodingSomeEnum.SomeEnum1)
-
-    val bson2 = new BsonString("SomeEnum234")
-    BsonDecoder.enumBsonDecoder[DecodingSomeEnum.type].decode(bson2) shouldBe Success(DecodingSomeEnum.SomeEnum2)
-  }
-
-  it should "decode none on invalid value" in {
-    val bson = new BsonString("SomeEnum567")
-    BsonDecoder.enumBsonDecoder[DecodingSomeEnum.type].decode(bson).isFailure shouldBe true
-  }
 
   "optionDecoder" should "decode valid value" in {
     val x = "abc"
