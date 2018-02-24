@@ -112,13 +112,6 @@ class DefaultBsonEncodersSpec extends FlatSpec with Matchers {
 
   }
 
-  "enumEncoder" should "encode valid value" in {
-    val x = SomeEnum.SomeEnum1
-    val expected = WriteAction.Value(new BsonString("SomeEnum123"))
-    val result = BsonEncoder.enumEncoder[SomeEnum.type].encode(x)
-    result shouldBe expected
-  }
-
   "optionBsonEncoder" should "pass valid value if some" in {
     val value = 123
     val option = Some(value)
