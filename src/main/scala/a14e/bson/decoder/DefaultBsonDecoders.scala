@@ -20,43 +20,47 @@ trait DefaultBsonDecoders {
   }
 
   implicit lazy val stringBsonDecoder: BsonDecoder[String] = {
-    implicitly[BsonDecoder[BsonValue]].collect({ case s: BsonString => s.getValue }, failError[BsonString])
+    BsonDecoder[BsonValue].collect({ case s: BsonString => s.getValue }, failError[BsonString])
   }
 
   implicit lazy val symbolBsonDecoder: BsonDecoder[Symbol] = {
-    implicitly[BsonDecoder[String]].map(Symbol(_))
+    BsonDecoder[String].map(Symbol(_))
+  }
+
+  implicit lazy val BigDecimalDecoder: BsonDecoder[BigDecimal] = {
+    BsonDecoder[Decimal128].map(_.bigDecimalValue())
   }
 
   implicit lazy val intBsonDecoder: BsonDecoder[Int] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case s: BsonNumber => s.intValue() }, failError[BsonNumber])
   }
   implicit lazy val longBsonDecoder: BsonDecoder[Long] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case s: BsonNumber => s.longValue() }, failError[BsonNumber])
   }
   implicit lazy val decimal128BsonDecoder: BsonDecoder[Decimal128] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case s: BsonNumber => s.decimal128Value() }, failError[BsonNumber])
   }
 
   implicit lazy val doubleBsonDecoder: BsonDecoder[Double] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case s: BsonNumber => s.doubleValue() }, failError[BsonNumber])
   }
 
   implicit lazy val booleanBsonDecoder: BsonDecoder[Boolean] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case s: BsonBoolean => s.getValue }, failError[BsonBoolean])
   }
 
   implicit lazy val dateBsonDecoder: BsonDecoder[Date] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case s: BsonDateTime => new Date(s.getValue) }, failError[BsonDateTime])
   }
 
   implicit lazy val instantBsonDecoder: BsonDecoder[Instant] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case s: BsonDateTime => Instant.ofEpochMilli(s.getValue) }, failError[BsonDateTime])
   }
 
@@ -65,13 +69,13 @@ trait DefaultBsonDecoders {
   }
 
   implicit lazy val bytesBsonDecoder: BsonDecoder[Array[Byte]] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .collect({ case b: BsonBinary => b.getData }, failError[BsonBinary])
   }
 
 
   implicit def optionDecoder[T](implicit decoder: Lazy[BsonDecoder[T]]): BsonDecoder[Option[T]] = {
-    implicitly[BsonDecoder[BsonValue]]
+    BsonDecoder[BsonValue]
       .flatMap {
         case _: BsonNull => Success(Option.empty[T])
         case c => decoder.value.decode(c).map(Some(_))
@@ -83,7 +87,7 @@ trait DefaultBsonDecoders {
   }
 
   implicit def seqDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Seq[T]] = {
-    implicitly[BsonDecoder[BsonValue]].flatMap {
+    BsonDecoder[BsonValue].flatMap {
       case s: BsonArray =>
         s.getValues
           .iterator()
@@ -101,7 +105,7 @@ trait DefaultBsonDecoders {
   }
 
   implicit def setDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Set[T]] = {
-    implicitly[BsonDecoder[BsonValue]].flatMap {
+    BsonDecoder[BsonValue].flatMap {
       case s: BsonArray =>
         s.getValues
           .iterator()
@@ -127,7 +131,7 @@ trait DefaultBsonDecoders {
 
     fixedKeyOpt match {
       case Some(key) =>
-        implicitly[BsonDecoder[BsonValue]].flatMap {
+        BsonDecoder[BsonValue].flatMap {
           case s: BsonDocument =>
             val decoded = Option(s.get(key)) match {
               case Some(v) => decodeFunction(v)
@@ -141,7 +145,7 @@ trait DefaultBsonDecoders {
         }
 
       case None =>
-        implicitly[BsonDecoder[BsonValue]].flatMap {
+        BsonDecoder[BsonValue].flatMap {
           case s: BsonDocument =>
             s.entrySet()
               .iterator()

@@ -39,7 +39,6 @@ package object bson {
 
     def recursiveSearch(key: String): Try[BsonValue] = Success(bsonValue).recursiveSearch(key)
 
-
     def \(key: String): Try[BsonValue] = search(key)
 
     def \\(key: String): Try[BsonValue] = recursiveSearch(key)

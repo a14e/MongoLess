@@ -32,6 +32,8 @@ case class BsonDecoder[T](decodeStrategies: Seq[DecodeStrategy],
 
 }
 
-object BsonDecoder extends DefaultBsonDecoders
+object BsonDecoder extends DefaultBsonDecoders {
+  def apply[T: BsonDecoder]: BsonDecoder[T] = implicitly[BsonDecoder[T]]
+}
 
 

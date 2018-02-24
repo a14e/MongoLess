@@ -13,10 +13,13 @@ import scala.collection.JavaConverters._
 
 trait DefaultBsonEncoders {
   implicit lazy val stringEncoder: BsonEncoder[String] = BsonEncoder((x: String) => new BsonString(x))
-  implicit lazy val symbolEncoder: BsonEncoder[Symbol] = implicitly[BsonEncoder[String]].contramap[Symbol](_.name)
+  implicit lazy val symbolEncoder: BsonEncoder[Symbol] = BsonEncoder[String].contramap[Symbol](_.name)
   implicit lazy val intEncoder: BsonEncoder[Int] = BsonEncoder((value: Int) => new BsonInt32(value))
   implicit lazy val longEncoder: BsonEncoder[Long] = BsonEncoder((value: Long) => new BsonInt64(value))
   implicit lazy val decimal128Encoder: BsonEncoder[Decimal128] = BsonEncoder((value: Decimal128) => new BsonDecimal128(value))
+
+  implicit lazy val bigDecimalEncoder: BsonEncoder[BigDecimal] =
+    BsonEncoder[Decimal128].contramap[BigDecimal](x => new Decimal128(x.bigDecimal))
   implicit lazy val doubleEncoder: BsonEncoder[Double] = BsonEncoder((value: Double) => new BsonDouble(value))
   implicit lazy val booleanEncoder: BsonEncoder[Boolean] = BsonEncoder((value: Boolean) => new BsonBoolean(value))
   implicit lazy val bytesEncoder: BsonEncoder[Array[Byte]] = BsonEncoder((bytes: Array[Byte]) => new BsonBinary(bytes))
@@ -29,14 +32,10 @@ trait DefaultBsonEncoders {
     date.atStartOfDay(ZoneId.of("UTC")).toInstant
   }
 
-  implicit def bsonValueEncoder[T <: BsonValue]: BsonEncoder[T] = BsonEncoder(identity)
+  implicit def bsonValueEncoder[T <: BsonValue]: BsonEncoder[T] = BsonEncoder(x => x)
 
   implicit def idBsonEncoder[T](implicit encoder: BsonEncoder[T]): BsonEncoder[ID[T]] = {
     (obj: ID[T]) => encoder.encode(obj).flatMap(b => WriteAction.NamedValue("_id", b))
-  }
-
-  implicit def enumEncoder[T <: Enumeration]: BsonEncoder[T#Value] = {
-    implicitly[BsonEncoder[String]].contramap(_.toString)
   }
 
   implicit def optionBsonEncoder[T](implicit encoder: Lazy[BsonEncoder[T]]): BsonEncoder[Option[T]] = {

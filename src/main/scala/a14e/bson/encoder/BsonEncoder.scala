@@ -15,6 +15,8 @@ trait BsonEncoder[T] {
 }
 
 object BsonEncoder extends DefaultBsonEncoders {
+  def apply[T: BsonEncoder]: BsonEncoder[T] = implicitly[BsonEncoder[T]]
+
   def apply[T](f: T => BsonValue): BsonEncoder[T] = obj => WriteAction.Value(f(obj))
 }
 
