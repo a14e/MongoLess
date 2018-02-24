@@ -26,6 +26,13 @@ package object bson {
     new RichBsonTryValue(bsonValueTry)
   }
 
+  implicit class RichBsonDocument(val document: BsonDocument) extends AnyVal {
+    def ++=(other: BsonDocument): BsonDocument = {
+      document.putAll(document)
+      document
+    }
+  }
+
 
   implicit class RichBsonValue(val bsonValue: BsonValue) extends AnyVal {
 

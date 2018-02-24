@@ -2,7 +2,7 @@ name := "mongoless"
 
 organization := "com.github.a14e"
 
-version := "0.2.3"
+version := "0.2.4"
 
 scalaVersion := "2.12.4"
 
