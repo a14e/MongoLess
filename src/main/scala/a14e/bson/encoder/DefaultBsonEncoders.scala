@@ -32,7 +32,7 @@ trait DefaultBsonEncoders {
     date.atStartOfDay(ZoneId.of("UTC")).toInstant
   }
 
-  implicit def bsonValueEncoder[T <: BsonValue]: BsonEncoder[T] = BsonEncoder(x => x)
+  implicit def bsonValueEncoder[T <: BsonValue]: BsonEncoder[T] = BsonEncoder[T](x => x)
 
   implicit def idBsonEncoder[T](implicit encoder: BsonEncoder[T]): BsonEncoder[ID[T]] = {
     (obj: ID[T]) => encoder.encode(obj).flatMap(b => WriteAction.NamedValue("_id", b))
