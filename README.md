@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/a14e/MongoLess.svg?branch=master)](https://travis-ci.org/a14e/MongoLess)
 [![codecov.io](https://codecov.io/gh/a14e/MongoLess/coverage.svg?branch=master)](https://codecov.io/gh/MongoLess?branch=master)
 
-Shapeless based BSON serialization for from Mongo Java and Scala Drivers
+Shapeless based BSON serialization for Mongo Java and Scala Drivers
 
 
 MongoLess is a simple lib for encoding scala case classes for [Mongo Java Driver](https://github.com/mongodb/mongo-java-driver).
