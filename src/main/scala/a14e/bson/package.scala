@@ -1,6 +1,6 @@
 package a14e
 
-import a14e.bson.decoder.{BsonDecoder, GenericBsonDecoders}
+import a14e.bson.decoder.{BsonDecoder, EnumUnsafeDecoder, GenericBsonDecoders}
 import a14e.bson.encoder.{BsonEncoder, GenericBsonEncoders}
 import com.mongodb.async.client.MongoClients
 import org.bson.{BsonArray, BsonDocument, BsonValue, Document}
@@ -12,7 +12,9 @@ import scala.util.{Failure, Success, Try}
 
 package object bson {
 
-  object auto extends GenericBsonDecoders with GenericBsonEncoders
+  object auto extends GenericBsonDecoders with GenericBsonEncoders {
+    object enumUnsafe extends EnumUnsafeDecoder
+  }
 
   implicit class RichBsonEncodingsObject[T](val obj: T) extends AnyVal {
     def asBson(implicit encoder: BsonEncoder[T]): BsonValue = encoder.encode(obj).extract
@@ -38,6 +40,8 @@ package object bson {
 
     def decode[T](implicit decoder: BsonDecoder[T]): Try[T] = decoder.decode(bsonValue)
 
+    def asTry[T](implicit decoder: BsonDecoder[T]): Try[T] = decode
+
     def asOpt[T](implicit decoder: BsonDecoder[T]): Option[T] = decode[T].toOption
 
     def as[T](implicit decoder: BsonDecoder[T]): T = decode[T].get
@@ -54,6 +58,8 @@ package object bson {
   implicit class RichBsonTryValue(private val value: Try[BsonValue]) extends AnyVal {
 
     def decode[T](implicit decoder: BsonDecoder[T]): Try[T] = value.flatMap(decoder.decode)
+
+    def asTry[T](implicit decoder: BsonDecoder[T]): Try[T] = decode
 
     def asOpt[T](implicit decoder: BsonDecoder[T]): Option[T] = decode[T].toOption
 

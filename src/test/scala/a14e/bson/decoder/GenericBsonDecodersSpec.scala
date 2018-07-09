@@ -5,6 +5,8 @@ import a14e.bson._
 import a14e.bson.auto._
 import org.scalatest.{FlatSpec, Matchers}
 import BsonDecoder._
+import org.bson.BsonString
+import scala.util.Success
 
 case class SampleUser(id: ID[Int],
                       name: String,

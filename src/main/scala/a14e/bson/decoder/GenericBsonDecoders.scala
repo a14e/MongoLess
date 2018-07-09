@@ -15,7 +15,7 @@ trait GenericBsonDecoders {
   import shapeless.Witness
 
 
-  implicit val bsonReader: BsonDecoder[HNil] = BsonDecoder(DecodeStrategy.empty, _ => Success(HNil))
+  implicit val bsonReader: BsonDecoder[HNil] = BsonDecoder(_ => Success(HNil))
 
 
   implicit def hlistBsonDecoder[Key <: Symbol, Head, Tail <: HList](implicit
@@ -23,35 +23,29 @@ trait GenericBsonDecoders {
                                                                     headDecoder: Lazy[BsonDecoder[Head]],
                                                                     tailDecoder: Lazy[BsonDecoder[Tail]]): BsonDecoder[FieldType[Key, Head] :: Tail] = {
 
-    val enableEmpty = headDecoder.value.decodeStrategies.collectFirst { case DecodeStrategy.EnableEmpty =>}.isDefined
-
-    val key: String = headDecoder.value.decodeStrategies.collectFirst {
-      case DecodeStrategy.Named(name) => name
-    }.getOrElse(classFieldKey.value.name)
+    val enableEmpty = headDecoder.value.enableEmpty
+    val key: String = headDecoder.value.replaceName.getOrElse(classFieldKey.value.name)
 
 
-    BsonDecoder(DecodeStrategy.empty, {
-      case bsonDoc: BsonDocument =>
+    BsonDecoder[BsonDocument].flatMapTry { bsonDoc =>
+      for {
+        tail <- tailDecoder.value.decode(bsonDoc)
+        found = bsonDoc.get(key)
+        corrected = if (found == null) {
+          if (enableEmpty) new BsonNull()
+          else throw BsonReadExceptionUtils.missingFieldError(key)
+        } else found
+        head <- BsonReadExceptionUtils.enrichTryWitKey(headDecoder.value.decode(corrected), key)
+      } yield labelled.field[Key][Head](head) :: tail
 
-        for {
-          tail <- tailDecoder.value.decode(bsonDoc)
-          found = bsonDoc.get(key)
-          corrected = if (found == null) {
-            if(enableEmpty) new BsonNull()
-            else throw BsonReadExceptionUtils.missingFieldError(key)
-          } else found
-          head <- BsonReadExceptionUtils.enrichTryWitKey(headDecoder.value.decode(corrected), key)
-        } yield labelled.field[Key][Head](head) :: tail
-
-      case x => Failure(BsonReadExceptionUtils.invalidTypeError[BsonDocument](x))
-    })
+    }
   }
 
 
   implicit def caseClassBsonDecoder[T, Repr](implicit
                                              lgen: LabelledGeneric.Aux[T, Repr],
                                              reprWrites: Lazy[BsonDecoder[Repr]]): BsonDecoder[T] =
-    BsonDecoder(DecodeStrategy.empty, (obj: BsonValue) => reprWrites.value.decode(obj).map(x => lgen.from(x)))
+    BsonDecoder((obj: BsonValue) => reprWrites.value.decode(obj).map(x => lgen.from(x)))
 
 
 }

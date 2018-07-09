@@ -18,6 +18,7 @@ trait DefaultBsonEncoders {
   implicit lazy val longEncoder: BsonEncoder[Long] = BsonEncoder((value: Long) => new BsonInt64(value))
   implicit lazy val decimal128Encoder: BsonEncoder[Decimal128] = BsonEncoder((value: Decimal128) => new BsonDecimal128(value))
 
+
   implicit lazy val bigDecimalEncoder: BsonEncoder[BigDecimal] =
     BsonEncoder[Decimal128].contramap[BigDecimal](x => new Decimal128(x.bigDecimal))
   implicit lazy val doubleEncoder: BsonEncoder[Double] = BsonEncoder((value: Double) => new BsonDouble(value))
@@ -28,31 +29,35 @@ trait DefaultBsonEncoders {
   implicit lazy val instantEncoder: BsonEncoder[Instant] =
     BsonEncoder((x: Instant) => new BsonDateTime(x.toEpochMilli))
   implicit lazy val localDateEncoder: BsonEncoder[LocalDate] =
-    implicitly[BsonEncoder[Instant]].contramap[LocalDate] { date =>
-    date.atStartOfDay(ZoneId.of("UTC")).toInstant
+    BsonEncoder[Instant].contramap[LocalDate] { date =>
+      date.atStartOfDay(ZoneId.of("UTC")).toInstant
+    }
+
+  implicit def enumBsonEncoder[T <: Enumeration]: BsonEncoder[T#Value] = {
+    BsonEncoder[String].contramap((x: T#Value) => x.toString)
   }
 
   implicit def bsonValueEncoder[T <: BsonValue]: BsonEncoder[T] = BsonEncoder[T]((x: T) => x)
 
   implicit def idBsonEncoder[T](implicit encoder: BsonEncoder[T]): BsonEncoder[ID[T]] = {
-    (obj: ID[T]) => encoder.encode(obj).flatMap(b => WriteAction.NamedValue("_id", b))
+    obj: ID[T] => encoder.encode(obj).flatMap(b => WriteAction.NamedValue("_id", b))
   }
 
   implicit def optionBsonEncoder[T](implicit encoder: Lazy[BsonEncoder[T]]): BsonEncoder[Option[T]] = {
-    (opt: Option[T]) => opt.fold(WriteAction.empty)(encoder.value.encode)
+    opt: Option[T] => opt.fold(WriteAction.Value(new BsonNull()): WriteAction)(encoder.value.encode)
   }
 
   implicit def seqBsonEncoder[T](implicit encoder: Lazy[BsonEncoder[T]]): BsonEncoder[Seq[T]] = BsonEncoder {
-    (seq: Seq[T]) =>
+    seq: Seq[T] =>
       val data = seq.toStream.map(encoder.value.encode).collect {
         case WriteAction.Value(x) => x
         case WriteAction.NamedValue(_, x) => x
       }.asJava
-     new  BsonArray(data)
+      new BsonArray(data)
   }
 
   implicit def setBsonEncoder[T](implicit encoder: Lazy[BsonEncoder[T]]): BsonEncoder[Set[T]] = BsonEncoder {
-    (seq: Set[T]) =>
+    seq: Set[T] =>
       val data = seq.toStream.map(encoder.value.encode).collect {
         case WriteAction.Value(x) => x
         case WriteAction.NamedValue(_, x) => x
@@ -61,7 +66,7 @@ trait DefaultBsonEncoders {
   }
 
   implicit def mapBsonEncoder[T](implicit encoder: Lazy[BsonEncoder[T]]): BsonEncoder[Map[String, T]] = BsonEncoder {
-    (map: Map[String, T]) =>
+    map: Map[String, T] =>
       val data = map.mapValues(encoder.value.encode).toStream.collect {
         case (key, WriteAction.Value(x)) => new BsonElement(key, x)
         case (_, WriteAction.NamedValue(keyForReplace, x)) => new BsonElement(keyForReplace, x)

@@ -137,3 +137,100 @@ bson \\ "_id"
 // 123
 
 ```
+
+## Enum Support
+MongoLess also offers limited scala enums support. But enum should be an object and it should
+not be nested
+
+```scala
+import a14e.bson._
+import a14e.bson.auto._
+import a14e.bson.auto.enumUnsafe._
+
+
+object SizeType extends Enumeration {
+    type SizeType = Value
+    val Big = Value("BIG")
+    val Small = Value("SMALL")
+}
+
+import SizeType._
+
+case class Hat(price: Int,
+               sizeType: SizeType)
+val hat = Hat(123, Big)
+
+val bsonHat = hat.asBson
+//{ "sizeType" : "BIG", "price" : 123 }
+bsonHat.as[Hat] == hat
+// true
+```
+
+
+## ADT support
+One can build ADT encoders throw `BsonEncoder.switch` (warning: in example lazy val can produce stack overflow)
+```scala
+
+trait Shape
+case class Circle(r: Double) extends Shape
+case class Rectangle(a: Double) extends Shape
+
+import a14e.bson.encoder.BsonEncoder
+import a14e.bson._
+
+implicit val shapeEncoder: BsonEncoder[Shape] = {
+    import a14e.bson.auto._
+    BsonEncoder.switch[String, Shape]("type")(
+      "circle" -> BsonEncoder[Circle],
+      "rectangle" -> BsonEncoder[Rectangle]
+    )
+  }
+
+ Circle(1).asBson // { "r" : 1.0, "type" : "circle" }
+ Rectangle(1).asBson // { "a" : 1.0, "type" : "rectangle" }
+
+```
+and decoders in same way:
+```scala
+
+trait Shape
+case class Circle(r: Double) extends Shape
+case class Rectangle(a: Double) extends Shape
+
+import a14e.bson.decoder.BsonDecoder
+import a14e.bson._
+
+implicit val decoder: BsonDecoder[Shape] = {
+    import a14e.bson.auto._
+    BsonDecoder.switch[String, Shape]("type")(
+      "circle" -> BsonDecoder[Circle],
+      "rectangle" -> BsonDecoder[Rectangle]
+    )
+  }
+
+
+val circleBson = Bson.obj(
+  "type" -> "circle",
+  "r" -> 1.0
+)
+
+circleBson.as[Shape] // == Circle(1.0)
+
+```
+
+## Known Issues
+* import of `a14e.bson.auto._` can break encoding of BsonNull
+```scala
+
+import org.bson.BsonNull
+import a14e.bson._
+import a14e.bson.auto._
+Bson.obj("key" -> new BsonNull()).asBson // == {"key" : {}}
+```
+workaround: move move or hide `import a14e.bson.auto._`
+```scala
+
+import org.bson.BsonNull
+import a14e.bson._
+Bson.obj("key" -> new BsonNull()).asBson // == {"key" : null}
+```

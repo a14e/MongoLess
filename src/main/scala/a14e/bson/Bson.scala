@@ -16,11 +16,15 @@ object Bson {
   }
 
   def obj(elems: (String, BsonWrapper)*): BsonDocument = {
-    val bsonValues = elems.toStream.collect {
-      case (key, BsonWrapperImpl(WriteAction.Value(x))) => new BsonElement(key, x)
-      case (_, BsonWrapperImpl(WriteAction.NamedValue(keyForReplace, x))) => new BsonElement(keyForReplace, x)
-    }.asJava
-    new BsonDocument(bsonValues)
+    elems.foldLeft(new BsonDocument()) {
+      case (doc, (key, BsonWrapperImpl(WriteAction.Value(x)))) =>
+        doc.put(key, x)
+        doc
+      case (doc,(_, BsonWrapperImpl(WriteAction.NamedValue(keyForReplace, x)))) =>
+        doc.put(keyForReplace, x)
+        doc
+      case (doc, _) => doc
+    }
   }
 
   def arr(elems: BsonWrapper*): BsonArray = {

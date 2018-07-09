@@ -31,27 +31,6 @@ class BsonSpec extends FlatSpec with Matchers {
     expected shouldBe result
   }
 
-  it should "hide None values" in {
-    val value1 = new BsonString("value1")
-    val value2 = new BsonInt32(2)
-
-    val expected: BsonDocument =
-      new BsonDocument(
-        java.util.Arrays.asList(
-          new BsonElement("key1", value1),
-          new BsonElement("key2", value2)
-        )
-      )
-
-    val result = Bson.obj(
-      "key1" -> "value1",
-      "key2" -> 2,
-      "key3" -> Option.empty[Boolean]
-    )
-
-    expected shouldBe result
-  }
-
   it should "replace name for id" in {
     val value1 = new BsonString("value1")
 
@@ -77,18 +56,6 @@ class BsonSpec extends FlatSpec with Matchers {
     val expected = new BsonArray(java.util.Arrays.asList(value1, value2, value3))
 
     val result = Bson.arr("value1", 2, false)
-
-    expected shouldBe result
-  }
-
-
-  it should "skip none" in {
-    val value1 = new BsonString("value1")
-    val value2 = new BsonInt32(2)
-
-    val expected = new BsonArray(java.util.Arrays.asList(value1, value2))
-
-    val result = Bson.arr("value1", 2, Option.empty[String])
 
     expected shouldBe result
   }

@@ -5,7 +5,7 @@ import java.util.Date
 
 import a14e.bson.ID
 import org.bson.types.Decimal128
-import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDecimal128, BsonDocument, BsonDouble, BsonElement, BsonInt32, BsonInt64, BsonString}
+import org.bson._
 import org.scalatest.{FlatSpec, Matchers}
 
 object SomeEnum extends Enumeration {
@@ -120,9 +120,9 @@ class DefaultBsonEncodersSpec extends FlatSpec with Matchers {
     result shouldBe expected
   }
 
-  it should "pass empty if none" in {
+  it should "pass null if none" in {
     val option = Option.empty[Int]
-    val expected = WriteAction.Empty
+    val expected = WriteAction.Value(new BsonNull())
     val result = BsonEncoder.optionBsonEncoder[Int].encode(option)
     result shouldBe expected
   }
@@ -136,15 +136,6 @@ class DefaultBsonEncodersSpec extends FlatSpec with Matchers {
     result shouldBe expected
   }
 
-  it should "skip empty values" in {
-    val xs = Seq(Option(1), Option(2), Option.empty[Int])
-    val expected = WriteAction.Value(
-      new BsonArray(java.util.Arrays.asList(new BsonInt32(1), new BsonInt32(2)))
-    )
-    val result = BsonEncoder.seqBsonEncoder[Option[Int]].encode(xs)
-    result shouldBe expected
-  }
-
   "setBsonEncoder" should "encode valid seq" in {
     val xs = Set(1, 2, 3)
     val expected = WriteAction.Value(
@@ -154,17 +145,6 @@ class DefaultBsonEncodersSpec extends FlatSpec with Matchers {
     result shouldBe expected
 
   }
-
-  it should "skip empty values" in {
-    val xs = Set(Option(1), Option(2), Option.empty[Int])
-    val expected = WriteAction.Value(
-      new BsonArray(java.util.Arrays.asList(new BsonInt32(1), new BsonInt32(2)))
-    )
-    val result = BsonEncoder.setBsonEncoder[Option[Int]].encode(xs)
-    result shouldBe expected
-
-  }
-
 
   "mapBsonEncoder" should "encode valid seq" in {
 
@@ -184,24 +164,6 @@ class DefaultBsonEncodersSpec extends FlatSpec with Matchers {
     val xs = Map("key1" -> "value1", "key2" -> "value2")
     val result = BsonEncoder.mapBsonEncoder[String].encode(xs)
     result shouldBe expected
-  }
-
-  it should "skip empty values" in {
-    val value1 = new BsonString("value1")
-    val expected =
-      WriteAction.Value(
-        new BsonDocument(
-          java.util.Arrays.asList(
-            new BsonElement("key1", value1)
-          )
-        )
-      )
-
-
-    val xs = Map("key1" -> Option("value1"), "key2" -> Option.empty[String])
-    val result = BsonEncoder.mapBsonEncoder[Option[String]].encode(xs)
-    result shouldBe expected
-
   }
 
   it should "should replace name for specific fields" in {

@@ -1,9 +1,8 @@
 package a14e.bson.encoder
 
 import org.scalatest.{FlatSpec, Matchers}
-import BsonEncoder._
 import a14e.bson.{Bson, ID}
-import a14e.bson.auto._
+import org.bson.BsonNull
 
 case class SampleUser(id: ID[Int],
                       name: String,
@@ -33,8 +32,11 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
     val expectedBson = Bson.obj(
       "_id" -> 213,
       "name" ->  "name",
+      "job" ->  new BsonNull(),
       "children" -> Bson.arr()
     )
+
+    import a14e.bson.auto._
 
     user.asBson shouldBe expectedBson
   }
@@ -62,6 +64,7 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
       "children" -> Bson.arr()
     )
 
+    import a14e.bson.auto._
     user.asBson shouldBe expectedBson
   }
 
@@ -83,15 +86,19 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
     val expectedBson = Bson.obj(
       "_id" -> 213,
       "name" ->  "name",
+
+      "job" ->  new BsonNull(),
       "children" -> Bson.arr(
         Bson.obj(
           "_id" -> 456,
           "name" ->  "name1",
+          "job" ->  new BsonNull(),
           "children" -> Bson.arr()
         )
       )
     )
 
+    import a14e.bson.auto._
     user.asBson shouldBe expectedBson
   }
 
@@ -108,10 +115,12 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
     val expectedBson = Bson.obj(
       "levelNumber" -> 1,
       "nextLevel" -> Bson.obj(
-        "levelNumber" -> 2
+        "levelNumber" -> 2,
+        "nextLevel" ->  new BsonNull()
       )
     )
 
+    import a14e.bson.auto._
     level.asBson shouldBe expectedBson
   }
 
@@ -137,6 +146,8 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
         )
       )
     )
+
+    import a14e.bson.auto._
     node.asBson shouldBe expectedBson
   }
 }

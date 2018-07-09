@@ -4,7 +4,7 @@ import java.time.{Instant, LocalDate, ZoneId}
 import java.util.Date
 
 import a14e.bson.{BsonReadException, BsonReadExceptionUtils, ID}
-import org.bson._
+import org.bson.{BsonValue, _}
 import org.bson.types.Decimal128
 import shapeless.Lazy
 
@@ -15,9 +15,13 @@ import scala.util.{Failure, Success, Try}
 
 
 trait DefaultBsonDecoders {
-  implicit lazy val bsonValueDecoder: BsonDecoder[BsonValue] = {
-    BsonDecoder(Seq.empty, Success(_))
-  }
+  implicit lazy val bsonValueDecoder: BsonDecoder[BsonValue] = BsonDecoder(Success(_))
+
+  implicit lazy val bsonDocumentDecoder: BsonDecoder[BsonDocument] = BsonDecoder[BsonDocument] ({
+    case bsonDoc: BsonDocument => Success(bsonDoc)
+    case x => Failure(BsonReadExceptionUtils.invalidTypeError[BsonDocument](x))
+  }:BsonValue => Try[BsonDocument])
+
 
   implicit lazy val stringBsonDecoder: BsonDecoder[String] = {
     BsonDecoder[BsonValue].collect({ case s: BsonString => s.getValue }, failError[BsonString])
@@ -26,6 +30,7 @@ trait DefaultBsonDecoders {
   implicit lazy val symbolBsonDecoder: BsonDecoder[Symbol] = {
     BsonDecoder[String].map(Symbol(_))
   }
+
 
   implicit lazy val BigDecimalDecoder: BsonDecoder[BigDecimal] = {
     BsonDecoder[Decimal128].map(_.bigDecimalValue())
@@ -73,21 +78,25 @@ trait DefaultBsonDecoders {
       .collect({ case b: BsonBinary => b.getData }, failError[BsonBinary])
   }
 
+  def enumBsonDecoder[T <: Enumeration](enum: T): BsonDecoder[T#Value] = {
+    implicitly[BsonDecoder[String]].map(x => enum.withName(x))
+  }
+
 
   implicit def optionDecoder[T](implicit decoder: Lazy[BsonDecoder[T]]): BsonDecoder[Option[T]] = {
     BsonDecoder[BsonValue]
-      .flatMap {
+      .flatMapTry {
         case _: BsonNull => Success(Option.empty[T])
         case c => decoder.value.decode(c).map(Some(_))
-      }.copy(decodeStrategies = DecodeStrategy.EnableEmpty +: decoder.value.decodeStrategies)
+      }.copy(enableEmpty = true)
   }
 
   implicit def idDecoder[T](implicit bsonDecoder: BsonDecoder[T]): BsonDecoder[ID[T]] = {
-    bsonDecoder.map(ID(_)).copy(decodeStrategies = DecodeStrategy.Named("_id") +: bsonDecoder.decodeStrategies)
+    bsonDecoder.map(ID(_)).copy(replaceName = Some("_id"))
   }
 
   implicit def seqDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Seq[T]] = {
-    BsonDecoder[BsonValue].flatMap {
+    BsonDecoder[BsonValue].flatMapTry {
       case s: BsonArray =>
         s.getValues
           .iterator()
@@ -105,7 +114,7 @@ trait DefaultBsonDecoders {
   }
 
   implicit def setDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Set[T]] = {
-    BsonDecoder[BsonValue].flatMap {
+    BsonDecoder[BsonValue].flatMapTry {
       case s: BsonArray =>
         s.getValues
           .iterator()
@@ -122,16 +131,14 @@ trait DefaultBsonDecoders {
   }
 
   implicit def mapDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Map[String, T]] = {
-    val fixedKeyOpt: Option[String] = bsonDecoder.value.decodeStrategies.collectFirst {
-      case DecodeStrategy.Named(name) => name
-    }
-    lazy val enableEmpty = bsonDecoder.value.decodeStrategies.collectFirst { case DecodeStrategy.EnableEmpty => }.isDefined
+    val fixedKeyOpt: Option[String] = bsonDecoder.value.replaceName
+    lazy val enableEmpty = bsonDecoder.value.enableEmpty
 
     lazy val decodeFunction: BsonValue => Try[T] = bsonDecoder.value.decode
 
     fixedKeyOpt match {
       case Some(key) =>
-        BsonDecoder[BsonValue].flatMap {
+        BsonDecoder[BsonValue].flatMapTry {
           case s: BsonDocument =>
             val decoded = Option(s.get(key)) match {
               case Some(v) => decodeFunction(v)
@@ -145,7 +152,7 @@ trait DefaultBsonDecoders {
         }
 
       case None =>
-        BsonDecoder[BsonValue].flatMap {
+        BsonDecoder[BsonValue].flatMapTry {
           case s: BsonDocument =>
             s.entrySet()
               .iterator()
@@ -164,6 +171,7 @@ trait DefaultBsonDecoders {
   }
 
   private def failError[T: ClassTag](x: BsonValue): Throwable = BsonReadExceptionUtils.invalidTypeError[T](x)
+
   private def fail[T: ClassTag](x: BsonValue): Try[Nothing] = Failure(failError[T](x))
 
 }

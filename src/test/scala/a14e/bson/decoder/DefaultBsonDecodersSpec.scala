@@ -194,7 +194,7 @@ class DefaultBsonDecodersSpec extends FlatSpec with Matchers {
   }
 
   it should "be named with name '_id'" in {
-    BsonDecoder.idDecoder[String].decodeStrategies should contain(DecodeStrategy.Named("_id"))
+    BsonDecoder.idDecoder[String].replaceName shouldBe Some("_id")
   }
 
   "seqDecoder" should "decode valid seq" in {
@@ -280,6 +280,40 @@ class DefaultBsonDecodersSpec extends FlatSpec with Matchers {
         )
       )
     BsonDecoder.mapDecoder[ID[String]].decode(bson) shouldBe Success(Map("_id" -> ID("value1")))
+  }
+
+  "enumBsonDecoder" should "decode valid value" in {
+    val bson1 = new BsonString("SomeEnum123")
+    BsonDecoder.enumBsonDecoder(DecodingSomeEnum).decode(bson1) shouldBe Success(DecodingSomeEnum.SomeEnum1)
+
+    val bson2 = new BsonString("SomeEnum234")
+    BsonDecoder.enumBsonDecoder(DecodingSomeEnum).decode(bson2) shouldBe Success(DecodingSomeEnum.SomeEnum2)
+  }
+
+  it should "decode none on invalid value" in {
+    val bson = new BsonString("SomeEnum567")
+    BsonDecoder.enumBsonDecoder(DecodingSomeEnum).decode(bson).isFailure shouldBe true
+  }
+
+  "EnumUnsafeDecoder" should "decode valid value" in {
+    val bson1 = new BsonString("SomeEnum123")
+    val res = EnumUnsafeDecoder.unsafeEnumBsonDecoder[DecodingSomeEnum.type].decode(bson1)
+    res shouldBe Success(DecodingSomeEnum.SomeEnum1)
+  }
+
+  it should "decode another valid value" in {
+    val bson1 = new BsonString("SomeEnum234")
+    val res = EnumUnsafeDecoder.unsafeEnumBsonDecoder[DecodingSomeEnum.type].decode(bson1)
+    res shouldBe Success(DecodingSomeEnum.SomeEnum2)
+  }
+
+  it should "decode none on invalid value" in {
+    val bson = new BsonString("SomeEnum567")
+    val isFailure = EnumUnsafeDecoder.unsafeEnumBsonDecoder[DecodingSomeEnum.type]
+      .decode(bson)
+      .isFailure
+
+    isFailure shouldBe true
   }
 }
 
