@@ -27,7 +27,7 @@ class BsonDecodingSwitchingSpec extends FlatSpec with Matchers {
       "type" -> "circle",
       "r" -> circle.r
     )
-    bson.as[Shape] shouldBe Success(circle)
+    bson.as[Shape] shouldBe circle
   }
 
   it should "fail if decoder not found by key" in {
