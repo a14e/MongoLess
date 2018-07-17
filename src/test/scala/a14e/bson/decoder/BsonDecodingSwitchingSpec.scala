@@ -36,7 +36,7 @@ class BsonDecodingSwitchingSpec extends FlatSpec with Matchers {
       "d" -> "1"
     )
 
-    intercept[RuntimeException] {
+    intercept[BsonReadException] {
       bson.as[Shape]
     }
   }
