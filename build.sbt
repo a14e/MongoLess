@@ -2,7 +2,7 @@ name := "mongoless"
 
 organization := "com.github.a14e"
 
-version := "0.2.4"
+version := "0.2.6"
 
 scalaVersion := "2.12.4"
 
@@ -45,7 +45,7 @@ pomExtra := {
     <developers>
       <developer>
         <id>AndrewInstance</id>
-        <name>Andrew</name>
+        <name>AndrewB</name>
         <email>m0hct3r@gmail.com</email>
       </developer>
     </developers>
