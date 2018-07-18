@@ -1,7 +1,8 @@
 package a14e.bson.decoder
 
-import a14e.bson.BsonReadException
+import a14e.bson.{BsonReadException, auto}
 import org.bson.{BsonDocument, BsonValue}
+import shapeless.{LabelledGeneric, Lazy}
 
 import scala.annotation.implicitNotFound
 import scala.util.{Failure, Success, Try}
@@ -55,6 +56,14 @@ object BsonDecoder extends DefaultBsonDecoders with BsonDecodingSwitching {
   def single[T](x: T): BsonDecoder[T] = fromTry(Success(x))
 
   def failed[T](err: Throwable): BsonDecoder[T] = fromTry(Failure(err))
+
+  def derived[T <: Product with Serializable] = new DummyApplyDecoderWrapper[T]
+
+  class DummyApplyDecoderWrapper[T <: Product with Serializable] {
+    def apply[Repr]()(implicit
+                      lgen: LabelledGeneric.Aux[T, Repr],
+                      reprWrites: Lazy[BsonDecoder[Repr]]): BsonDecoder[T] = auto.caseClassBsonDecoder[T, Repr]
+  }
 }
 
 

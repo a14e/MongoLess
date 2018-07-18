@@ -1,5 +1,6 @@
 package a14e.bson.encoder
 
+import a14e.bson.decoder.BsonDecoder
 import org.bson.BsonDocument
 
 
@@ -45,6 +46,7 @@ trait GenericBsonEncoders {
                                                                           lgen: LabelledGeneric.Aux[T, Repr],
                                                                           reprWrites: Lazy[BsonEncoder[Repr]]): BsonEncoder[T] =
     (obj: T) => reprWrites.value.encode(lgen.to(obj))
+
 
 
 }

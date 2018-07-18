@@ -48,4 +48,5 @@ trait GenericBsonDecoders {
     BsonDecoder((obj: BsonValue) => reprWrites.value.decode(obj).map(x => lgen.from(x)))
 
 
+
 }

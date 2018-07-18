@@ -15,8 +15,8 @@ class BsonEncodingSwitchingSpec extends FlatSpec with Matchers {
   implicit val encoder = {
     import a14e.bson.auto._
     BsonEncoder.switch[String, Shape]("type")(
-      "circle" -> BsonEncoder[Circle],
-      "rectangle" -> BsonEncoder[Rectangle]
+      "circle" -> BsonEncoder.derived[Circle](),
+      "rectangle" -> BsonEncoder.derived[Rectangle]()
     )
   }
 

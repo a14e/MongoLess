@@ -13,7 +13,7 @@ You can also use it with [Scala mongo driver](https://github.com/mongodb/mongo-s
 MonadLess is currently available for Scala 2.12 and Java 8.
 To install MongoLess just add following line to your sbt file
 ```scala
-libraryDependencies += "com.github.a14e" %% "mongoless" % "0.2.9"
+libraryDependencies += "com.github.a14e" %% "mongoless" % "0.2.10"
 ```
 
 
@@ -181,8 +181,8 @@ import a14e.bson._
 implicit val shapeEncoder: BsonEncoder[Shape] = {
     import a14e.bson.auto._
     BsonEncoder.switch[String, Shape]("type")(
-      "circle" -> BsonEncoder[Circle],
-      "rectangle" -> BsonEncoder[Rectangle]
+      "circle" -> BsonEncoder.derived[Circle](),
+      "rectangle" -> BsonEncoder.derived[Rectangle]()
     )
   }
 

@@ -1,8 +1,11 @@
 package a14e.bson.encoder
 
+import Gender.{Gender, Value}
+import a14e.bson.decoder.BsonDecoder
 import org.scalatest.{FlatSpec, Matchers}
-import a14e.bson.{Bson, ID}
+import a14e.bson.{Bson, ID, auto}
 import org.bson.BsonNull
+
 
 case class SampleUser(id: ID[Int],
                       name: String,
@@ -19,6 +22,30 @@ case class Level(levelNumber: Int,
 case class NamedNode(nodeName: String,
                      children: Map[String, NamedNode])
 
+
+case class Director(id: ID[String],
+                    name: String,
+                    gender: Gender,
+                    subordinates: Seq[Subordinate])
+
+trait Subordinate
+
+case class Manager(name: String,
+                   gender: Gender,
+                   salary: BigDecimal) extends Subordinate
+
+case class Clerk(name: String,
+                 gender: Gender,
+                 salary: BigDecimal) extends Subordinate
+
+
+object Gender extends Enumeration {
+  type Gender = Value
+  val Male = Value("Male")
+  val Female = Value("Female")
+}
+
+
 class GenericBsonEncodersSpec extends FlatSpec with Matchers {
 
   "GenericEncoder" should "encode simple class" in {
@@ -31,8 +58,8 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
 
     val expectedBson = Bson.obj(
       "_id" -> 213,
-      "name" ->  "name",
-      "job" ->  new BsonNull(),
+      "name" -> "name",
+      "job" -> new BsonNull(),
       "children" -> Bson.arr()
     )
 
@@ -56,7 +83,7 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
 
     val expectedBson = Bson.obj(
       "_id" -> 213,
-      "name" ->  "name",
+      "name" -> "name",
       "job" -> Bson.obj(
         "company" -> "some company",
         "salary" -> 123L
@@ -85,14 +112,14 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
 
     val expectedBson = Bson.obj(
       "_id" -> 213,
-      "name" ->  "name",
+      "name" -> "name",
 
-      "job" ->  new BsonNull(),
+      "job" -> new BsonNull(),
       "children" -> Bson.arr(
         Bson.obj(
           "_id" -> 456,
-          "name" ->  "name1",
-          "job" ->  new BsonNull(),
+          "name" -> "name1",
+          "job" -> new BsonNull(),
           "children" -> Bson.arr()
         )
       )
@@ -116,7 +143,7 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
       "levelNumber" -> 1,
       "nextLevel" -> Bson.obj(
         "levelNumber" -> 2,
-        "nextLevel" ->  new BsonNull()
+        "nextLevel" -> new BsonNull()
       )
     )
 
@@ -150,4 +177,58 @@ class GenericBsonEncodersSpec extends FlatSpec with Matchers {
     import a14e.bson.auto._
     node.asBson shouldBe expectedBson
   }
+
+
+  implicit lazy val subordinateEncoder: BsonEncoder[Subordinate] = {
+    import a14e.bson.auto._
+    BsonEncoder.switch[String, Subordinate]("type")(
+      "Manager" -> BsonEncoder.derived[Manager](),
+      "Clerk" -> BsonEncoder.derived[Clerk]()
+    )
+  }
+
+  it should "work for nested classes with switch" in {
+    val director = Director(
+      id = "123",
+      name = "Director Name",
+      gender = Gender.Male,
+      subordinates = Seq(
+        Manager(
+          name = "Manager name",
+          gender = Gender.Female,
+          salary = 123
+        ),
+        Clerk(
+          name = "Clerk name",
+          gender = Gender.Male,
+          salary = 456
+        )
+      )
+    )
+
+    val expectedBson = Bson.obj(
+      "_id" -> "123",
+      "name" -> "Director Name",
+      "gender" -> Gender.Male,
+      "subordinates" -> Bson.arr(
+        Bson.obj(
+          "name" -> "Manager name",
+          "gender" -> Gender.Female,
+          "salary" -> BigDecimal(123),
+          "type" -> "Manager"
+        ),
+        Bson.obj(
+          "name" -> "Clerk name",
+          "gender" -> Gender.Male,
+          "salary" -> BigDecimal(456),
+          "type" -> "Clerk"
+        )
+      )
+    )
+    import a14e.bson.auto._
+
+    director.asBson shouldBe expectedBson
+
+  }
+
 }

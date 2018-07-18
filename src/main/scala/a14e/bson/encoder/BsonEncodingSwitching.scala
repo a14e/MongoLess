@@ -40,25 +40,3 @@ trait BsonEncodingSwitching {
 
 }
 
-
-trait Shape
-case class Circle(r: Double) extends Shape
-case class Rectangle(a: Double) extends Shape
-
-object Test extends App {
-
-
-  implicit val encoder = {
-    import a14e.bson.auto._
-    BsonEncoder.switch[String, Shape]("type")(
-      "circle" -> BsonEncoder[Circle],
-      "rectangle" -> BsonEncoder[Rectangle]
-    )
-  }
-
-  val res1 = Circle(1).asBson
-  val res2 = Rectangle(1).asBson
-
-  println(res1)
-  println(res2)
-}

@@ -15,8 +15,8 @@ class BsonDecodingSwitchingSpec extends FlatSpec with Matchers {
 
   implicit val decoder: BsonDecoder[Shape] = {
     BsonDecoder.switch[String, Shape]("type")(
-      "circle" -> BsonDecoder[Circle],
-      "rectangle" -> BsonDecoder[Rectangle]
+      "circle" -> BsonDecoder.derived[Circle](),
+      "rectangle" -> BsonDecoder.derived[Rectangle]()
     )
   }
 
