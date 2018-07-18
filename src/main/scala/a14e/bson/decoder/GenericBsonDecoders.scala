@@ -42,9 +42,9 @@ trait GenericBsonDecoders {
   }
 
 
-  implicit def caseClassBsonDecoder[T, Repr](implicit
-                                             lgen: LabelledGeneric.Aux[T, Repr],
-                                             reprWrites: Lazy[BsonDecoder[Repr]]): BsonDecoder[T] =
+  implicit def caseClassBsonDecoder[T <: Product with Serializable, Repr](implicit
+                                                                          lgen: LabelledGeneric.Aux[T, Repr],
+                                                                          reprWrites: Lazy[BsonDecoder[Repr]]): BsonDecoder[T] =
     BsonDecoder((obj: BsonValue) => reprWrites.value.decode(obj).map(x => lgen.from(x)))
 
 

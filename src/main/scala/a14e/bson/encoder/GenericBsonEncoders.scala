@@ -41,9 +41,9 @@ trait GenericBsonEncoders {
 
   }
 
-  implicit def caseClassBsonEncoder[T, Repr](implicit
-                                             lgen: LabelledGeneric.Aux[T, Repr],
-                                             reprWrites: Lazy[BsonEncoder[Repr]]): BsonEncoder[T] =
+  implicit def caseClassBsonEncoder[T <: Product with Serializable, Repr](implicit
+                                                                          lgen: LabelledGeneric.Aux[T, Repr],
+                                                                          reprWrites: Lazy[BsonEncoder[Repr]]): BsonEncoder[T] =
     (obj: T) => reprWrites.value.encode(lgen.to(obj))
 
 

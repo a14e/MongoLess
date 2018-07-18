@@ -4,6 +4,7 @@ import a14e.bson._
 import org.scalatest.{FlatSpec, Matchers}
 import scala.util.Success
 
+import a14e.bson.auto._
 
 trait Shape
 case class Circle(r: Double) extends Shape
@@ -13,7 +14,6 @@ case class Rectangle(a: Double) extends Shape
 class BsonDecodingSwitchingSpec extends FlatSpec with Matchers {
 
   implicit val decoder: BsonDecoder[Shape] = {
-    import a14e.bson.auto._
     BsonDecoder.switch[String, Shape]("type")(
       "circle" -> BsonDecoder[Circle],
       "rectangle" -> BsonDecoder[Rectangle]
