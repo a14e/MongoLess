@@ -35,9 +35,6 @@ package object bson {
     }
   }
 
-  implicit class RichBsonValueSeq(val bsonValues: Seq[BsonValue]) extends AnyVal {
-    def as[T](implicit decoder: BsonDecoder[T]): Seq[T] = bsonValues.flatMap(_.asOpt[T])
-  }
 
   implicit class RichBsonValue(val bsonValue: BsonValue) extends AnyVal {
 

@@ -1,5 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea
 target
-publish.sbt
 project/target
