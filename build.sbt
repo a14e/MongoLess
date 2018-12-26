@@ -2,7 +2,7 @@ name := "mongoless"
 
 organization := "com.github.a14e"
 
-version := "0.3.00"
+version := "0.3.01"
 
 scalaVersion := "2.12.4"
 
@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "org.mongodb" % "mongodb-driver-async" % "3.6.1",
 
 
-  "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+  "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 )
 
 javacOptions in(Compile, compile) ++= {
