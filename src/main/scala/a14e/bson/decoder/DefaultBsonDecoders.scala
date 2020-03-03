@@ -9,6 +9,7 @@ import org.bson.types.Decimal128
 import shapeless.Lazy
 
 import scala.collection.JavaConverters._
+import scala.collection.generic.CanBuildFrom
 import scala.collection.immutable.VectorBuilder
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
@@ -95,7 +96,7 @@ trait DefaultBsonDecoders {
     bsonDecoder.map(ID(_)).copy(replaceName = Some("_id"))
   }
 
-  implicit def seqDecoder[T](implicit bsonDecoder: Lazy[BsonDecoder[T]]): BsonDecoder[Seq[T]] = {
+  implicit def seqDecoder[T, S[_] <: Seq[_]](implicit bsonDecoder: Lazy[BsonDecoder[T]], cbf: CanBuildFrom[S[T], T, S[T]]): BsonDecoder[S[T]] = {
     BsonDecoder[BsonValue].flatMapTry {
       case s: BsonArray =>
         s.getValues
@@ -107,7 +108,7 @@ trait DefaultBsonDecoders {
               builder <- builderTry
               decoded <- bsonDecoder.value.decode(current)
             } yield builder += decoded
-          }.map(_.result())
+          }.map(_.result().to[S])
 
       case x => fail[BsonArray](x)
     }
