@@ -203,7 +203,7 @@ class DefaultBsonDecodersSpec extends FlatSpec with Matchers {
 
     val bson = new BsonArray(java.util.Arrays.asList(value1, value2))
 
-    BsonDecoder.seqDecoder[String].decode(bson) shouldBe Success(Seq("value1", "value2"))
+    BsonDecoder.seqDecoder[String, Seq].decode(bson) shouldBe Success(Seq("value1", "value2"))
 
   }
 
@@ -214,7 +214,7 @@ class DefaultBsonDecodersSpec extends FlatSpec with Matchers {
 
     val bson = new BsonArray(java.util.Arrays.asList(value1, value2, value3))
 
-    BsonDecoder.seqDecoder[String].decode(bson).isFailure shouldBe true
+    BsonDecoder.seqDecoder[String, Seq].decode(bson).isFailure shouldBe true
 
   }
 

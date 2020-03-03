@@ -6,6 +6,7 @@ import a14e.bson.auto._
 import org.scalatest.{FlatSpec, Matchers}
 import BsonDecoder._
 import org.bson.BsonString
+
 import scala.util.Success
 
 case class SampleUser(id: ID[Int],
@@ -23,6 +24,9 @@ case class Level(levelNumber: Int,
 
 case class NamedNode(nodeName: String,
                      children: Map[String, NamedNode])
+
+case class ClassWithList(sequence: List[Int])
+case class ClassWithVector(sequence: Vector[Int])
 
 class GenericBsonDecodersSpec extends FlatSpec with Matchers {
 
@@ -143,5 +147,25 @@ class GenericBsonDecodersSpec extends FlatSpec with Matchers {
       )
     )
     bson.as[NamedNode] shouldBe node
+  }
+
+  it should "encode classes with different sequence types" in {
+
+    val nodeWithList =
+      ClassWithList(
+        sequence = List(1,2,3)
+      )
+
+    val nodeWithVector =
+      ClassWithVector(
+        sequence = Vector(1,2,3)
+      )
+
+    val bson = Bson.obj(
+      "sequence" -> Bson.arr(1, 2, 3)
+    )
+
+    bson.as[ClassWithList] shouldBe nodeWithList
+    bson.as[ClassWithVector] shouldBe nodeWithVector
   }
 }
